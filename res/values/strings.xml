@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ARC</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    
+	<string name="action_connect">Connect</string>
+	<string name="action_rtx">RTX</string>
+	<string name="action_settings">Settings</string>
+	
+	<string name="activity_settings">Settings</string>
+	
+	<string name="preference_title">Settings</string>
+	<string name="preference_checkbox_autoconnect">Automatically Connect</string>
+	<string name="preference_checkbox_connection_type">Connection</string>
+	<string name="preference_checkbox_bluetooth">Bluetooth</string>
+	<string name="preference_connection_method_summary">Select the connection method</string>
+	<string name="preference_map_type">Select the type of Map to display</string>
+	
+</resources>

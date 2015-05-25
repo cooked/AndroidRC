@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+    <header
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:summary="Summary"
+        android:title="Net" >
+        <!-- <intent 
+            android:action="android.settings.WIRELESS_SETTINGS"/> -->
+        <intent 
+            android:action="android.settings.WIFI_SETTINGS"/>
+    </header> 
+    <header 
+        android:fragment="sc.control.mwiifi.settings.SettingsFragmentNetwork"
+        android:title="Wireless and Network"
+        android:summary="Summary cat one" />
+    <header 
+        android:fragment="com.example.prefs.SettingsActivity$SettingsFragmentTwo"
+        android:title="Tytle cat 2"
+        android:summary="Summary cat 2" >
+        <!-- key/value pairs can be included as arguments for the fragment. -->
+        <extra android:name="someKey" android:value="someHeaderValue" />
+    </header>
+</preference-headers>
