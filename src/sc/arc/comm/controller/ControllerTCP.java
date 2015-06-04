@@ -16,14 +16,16 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.provider.Settings;
 import android.widget.TextView;
+import android.widget.Toast;
+import sc.arc.R;
 import sc.arc.comm.CommandBuffer;
-import sc.arc.comm.protocol.IProtocol;
 import sc.arc.comm.protocol.ProtocolMSP;
 import sc.arc.comm.rc.Channel;
 
 public class ControllerTCP extends Controller {
+
+	Activity activity;
 	
-	private Activity activity;
 	private TextView myLabel;
 	
 	Socket socket;
@@ -34,16 +36,15 @@ public class ControllerTCP extends Controller {
 	
 	private OutputStream mmOutputStream;
 	private InputStream mmInputStream;
-	
-    public ControllerTCP(CommandBuffer commandBuffer) {
-		super(commandBuffer);
-	}
 
+	public String preferredConnection = "ESP_";
+	
     public ControllerTCP(Activity main, TextView myLabel, List<Channel> ch) {
 		super(new CommandBuffer());
-		this.myLabel = myLabel;
+		setContext(main.getApplicationContext());
 		activity = main;
-
+		this.myLabel = myLabel;
+		
 		// define protocol
 		protocol = new ProtocolMSP(this, commandBuffer, ch);
 		
@@ -53,55 +54,53 @@ public class ControllerTCP extends Controller {
 	public boolean discover() {
 		mWifiManager = (WifiManager) activity.getSystemService(Context.WIFI_SERVICE);
 		if (mWifiManager == null) {
-			myLabel.setText("No Wifi adapter available");
+			Toast.makeText(getContext(), R.string.conn_wifi_no_adapter, Toast.LENGTH_LONG).show();
 			return false;
-		}
-		
-		if(!mWifiManager.isWifiEnabled()) {
+		} else if(!mWifiManager.isWifiEnabled()) {
 			Intent enableWifi = new Intent(Settings.ACTION_WIFI_SETTINGS);
 			activity.startActivity(enableWifi);
+			Toast.makeText(getContext(), R.string.conn_wifi_enabled, Toast.LENGTH_LONG).show();
+			// TODO check for the actual results and DO NOT assume everything's fine
 		}
 
 		List<ScanResult> wifiNetworks = mWifiManager.getScanResults();
 		if (wifiNetworks.size() > 0) {
 			for (ScanResult net : wifiNetworks) {
-				if (net.SSID.contains("ESP_")) {
+				if (net.SSID.contains(preferredConnection)) {
 					mmNet = net;
-					myLabel.setText("ESP_ network Found");
-					// TODO store the current NET if any
+					Toast.makeText(getContext(), preferredConnection + "found", Toast.LENGTH_LONG).show();
+					// TODO change this to preferences, store the current NET if any
+					// TODO take over the current network if not the preferred one (eventually in the connect task)
 					return true;
 				}
 			}
 		}
-		myLabel.setText("NO ESP_ network");
-		
+		 
+		Toast.makeText(getContext(), "NO ESP_ network", Toast.LENGTH_LONG).show();
 		return false;
 	}
     
     @Override
 	public boolean connect() {
-  		new NetworkTask().execute();
+  		new ConnectTask().execute();
         return true;
 	}
     
     @Override
 	public boolean disconnect() {
-		//socket.close();
+    	if(isRunning())
+    		stop();
+		try {
+			mmInputStream.close();
+			mmOutputStream.close();
+			socket.close();
+			setConnected(false);
+		} catch (IOException e) {
+		}
 		return true;
 	}
 
-	@Override
-	public boolean isConnected() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void setProtocol(IProtocol protcol) {
-		// TODO Auto-generated method stub
-	}
-
-	private class NetworkTask extends AsyncTask<Void, Void, Object>{
+	private class ConnectTask extends AsyncTask<Void, Void, Object>{
 
     	InetAddress serverAddr = null;
 
@@ -113,37 +112,32 @@ public class ControllerTCP extends Controller {
     			socket = new Socket(serverAddr, SERVERPORT);
     			mmInputStream = socket.getInputStream();
     			mmOutputStream = socket.getOutputStream();
+    			setConnected(true);
     		} catch (UnknownHostException e) {
     			e.printStackTrace();
     		} catch (IOException e) {
     			e.printStackTrace();
     		}
-
     		return serverAddr;
-
 
     	}
 
     	// onPostExecute displays the results of the AsyncTask.
     	@Override
     	protected void onPostExecute(Object result) {
-
+    		
     	}
+    	
     }
 	
-	
-
 	@Override
-	protected
-	void txTask() {
+	protected void txTask() {
 		new AsyncTask<Void, Void, Object>() {
 			
 			@Override
 			protected Object doInBackground(Void... v) {
 
-				// send command to the buffer
 				protocol.txChannels();
-				//protocol.requestTM(ProtocolMSP.MSP_RC);
 
 				if(!commandBuffer.isEmpty()) {
 					try {
@@ -153,9 +147,7 @@ public class ControllerTCP extends Controller {
 						e.printStackTrace();
 					}
 				}
-
-				return commandBuffer;
-
+				return null;
 			}
 		}.execute();
 
@@ -164,8 +156,7 @@ public class ControllerTCP extends Controller {
 		
 
 	@Override
-	protected
-	void rxTask() {
+	protected void rxTask() {
 		new AsyncTask<Void, Void, Object>() {
 			
 			int bytesRead = 0;
@@ -180,9 +171,8 @@ public class ControllerTCP extends Controller {
 
 				if(!commandBuffer.isEmpty()) {
 					try {
-						if(mmOutputStream!=null) {
+						if(mmOutputStream!=null)
 							mmOutputStream.write(commandBuffer.poll().getBytes());
-						}
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
@@ -194,7 +184,6 @@ public class ControllerTCP extends Controller {
 						if (bytesRead == -1) break;
 					}
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 				
@@ -206,20 +195,15 @@ public class ControllerTCP extends Controller {
 				
 			
 				    myLabel.setText("reading: "+bytesRead+" / ");
-				   // out.write(buffer,0,bytesRead);
-				    
-				    //ByteBuffer buf = ByteBuffer.wrap(out.toByteArray());
 				    int dataSize = 0;
 				    int checksum = 0;
 				    int offset 	 = 0;
-				    int MSP 	 = 0;
 				    byte inBuf[] = {};
 				    byte cmdMSP = 0;
 				    
 				    for(int i=0;i<bytesRead;i++) {
 				    	byte c = buffer[i];
-				    	
-				    
+
 						if(state==ProtocolMSP.IDLE) {
 					    	if (c=='$') state = ProtocolMSP.HEADER_START;
 					    } else if (state == ProtocolMSP.HEADER_START) {

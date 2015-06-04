@@ -1,0 +1,49 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <ListPreference
+        android:defaultValue="0"
+        android:entries="@array/connectTypeArray"
+        android:entryValues="@array/connectTypeValues"
+        android:key="connection_type"
+        android:summary="@string/preference_connection_method_summary"
+        android:title="@string/preference_checkbox_connection_type" />
+    <EditTextPreference
+        android:name="network_identifier"
+        android:defaultValue="Select default network ID"
+        android:key="net_id"
+        android:summary=""
+        android:title="WiFi Identifier" />
+    <EditTextPreference
+        android:name="ip_address"
+        android:defaultValue="192.168.0.1"
+        android:key="ip_address"
+        android:summary="Enter a TCP/IP address here"
+        android:title="IP address:" />
+    <EditTextPreference
+        android:name="port"
+        android:defaultValue="9001"
+        android:key="port"
+        android:summary="Enter a TCP/IP port here"
+        android:title="Port:" />
+
+    <!-- group wireless and network -->
+    <!-- opens a subscreen of settings
+    <PreferenceScreen
+        android:key="button_voicemail_category_key"
+        android:title="@string/voicemail"
+        android:persistent="false">
+        <ListPreference
+            android:key="button_voicemail_provider_key"
+            android:title="@string/voicemail_provider"/>
+        <PreferenceScreen
+            android:key="button_voicemail_setting_key"
+            android:title="@string/voicemail_settings"
+            android:persistent="false">
+        </PreferenceScreen>
+        <RingtonePreference
+            android:key="button_voicemail_ringtone_key"
+            android:title="@string/voicemail_ringtone_title"
+            android:ringtoneType="notification"/>
+    </PreferenceScreen> -->
+    
+</PreferenceScreen>

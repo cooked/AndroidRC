@@ -1,13 +1,15 @@
 package sc.arc.comm.controller;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
+import android.app.Activity;
+import android.content.Context;
 import sc.arc.comm.CommandBuffer;
 import sc.arc.comm.protocol.Protocol;
-
-import static java.util.concurrent.TimeUnit.*;
 
 public abstract class Controller implements IController {
 
@@ -21,6 +23,10 @@ public abstract class Controller implements IController {
 	public int 	ms_tx = 100;
 	public int 	ms_rx = 500;
 	
+	boolean connected		= false;
+	public boolean running 	= false;
+	
+	Context 		context;
 	CommandBuffer 	commandBuffer;
 	Protocol		protocol;
 
@@ -31,10 +37,18 @@ public abstract class Controller implements IController {
 		this.commandBuffer = commandBuffer;
 	}
 	
+	public Context getContext() {
+		return context;
+	}
+
+	public void setContext(Context context) {
+		this.context = context;
+	}
+	
 	protected void txTask(){};
 	protected void rxTask(){};
 	
-	public boolean start() {
+	public void start() {
 		
 		txHandle = scheduler.scheduleAtFixedRate(
 				new Runnable() {
@@ -44,18 +58,28 @@ public abstract class Controller implements IController {
 				new Runnable() {
 			       public void run() { rxTask(); }
 			     }, 1000, ms_rx, MILLISECONDS);
-		return true;
+		running = true;
+		
 	}
 	
 	public boolean stop() {
 		// http://stackoverflow.com/questions/4205327/scheduledexecutorservice-start-stop-several-times
 		txHandle.cancel(true);
 		rxHandle.cancel(true);
-		return false;
+		// TODO proper check
+		while(!txHandle.isCancelled()){};
+		while(!rxHandle.isCancelled()){};
+		running = false;
+		return true;
 	}
 	
 	public CommandBuffer getCommandBuffer() {
 		return commandBuffer;
+	}
+	
+	@Override
+	public void setProtocol(Protocol protcol) {
+		//this.protocol = protocol;
 	}
 	
 	public int getMode() {
@@ -64,6 +88,21 @@ public abstract class Controller implements IController {
 	
 	public int setMode(int mode) {
 		return this.mode = mode;
+	}
+
+	@Override
+	public boolean isRunning() {
+		return running;
+	}
+	
+	@Override
+	public boolean isConnected() {
+		return connected;
+	}
+
+	@Override
+	public void setConnected(boolean connected) {
+		this.connected = connected;
 	}
 
 }

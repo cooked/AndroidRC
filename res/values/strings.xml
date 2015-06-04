@@ -11,6 +11,24 @@
 	
 	<string name="activity_settings">Settings</string>
 	
+	<string name="conn_bt_no_adapter">no BT adapter</string>
+	<string name="conn_bt_enabled">BT enabled</string>
+	<string name="conn_bt_no_devices">BT device list empty</string>
+	<string name="conn_bt_connect">BT connection successfull</string>
+	<string name="conn_bt_connect_err">BT connection err</string>
+	<string name="conn_bt_disconnect">BT connection closed</string>
+	<string name="conn_bt_disconnect_err">BT disconnection error</string>
+	
+	<string name="conn_wifi_no_adapter">No WiFi adapter</string>
+	<string name="conn_wifi_enabled">WiFi is not enabled</string>
+	<string name="conn_wifi_no_devices">WiFi list empty</string>
+	<string name="conn_wifi_connect">WiFi connection successfull</string>
+	<string name="conn_wifi_connect_err">WiFi connection error</string>
+	<string name="conn_wifi_disconnect">WiFi connection closed</string>
+	<string name="conn_wifi_disconnect_err">WiFi disconnection error</string>
+	
+	<string name="conn_connect_lost">connection lost</string>
+	
 	<string name="preference_title">Settings</string>
 	<string name="preference_checkbox_autoconnect">Automatically Connect</string>
 	<string name="preference_checkbox_connection_type">Connection</string>

@@ -11,11 +11,11 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
 import android.widget.Toast;
-import sc.arc.comm.Command;
 import sc.arc.comm.CommandBuffer;
-import sc.arc.comm.protocol.IProtocol;
 
 public class ControllerUDP extends Controller {
+	
+	// see http://hastarin.github.io/android-udpsender/
 	
     public ControllerUDP(CommandBuffer commandBuffer) {
 		super(commandBuffer);
@@ -111,41 +111,15 @@ public class ControllerUDP extends Controller {
 	}
 
 	@Override
-	public boolean start() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean stop() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public boolean isConnected() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void setProtocol(IProtocol protcol) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	protected
 	void txTask() {
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	protected
 	void rxTask() {
 		// TODO Auto-generated method stub
-		
 	}
 
 }

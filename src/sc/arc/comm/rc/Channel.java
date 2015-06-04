@@ -3,7 +3,6 @@ package sc.arc.comm.rc;
 import it.sephiroth.android.library.easing.EasingManager;
 import it.sephiroth.android.library.easing.EasingManager.EasingCallback;
 import it.sephiroth.android.library.easing.Elastic;
-import it.sephiroth.android.library.easing.Linear;
 
 public class Channel implements EasingCallback {
 

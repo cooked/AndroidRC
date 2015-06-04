@@ -1,10 +1,10 @@
 package it.sephiroth.android.library.easing;
 
-import android.os.Handler;
-import android.os.SystemClock;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import android.os.Handler;
+import android.os.SystemClock;
 
 /**
  * Helper class to manage the Easing process.<br />

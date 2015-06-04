@@ -19,7 +19,7 @@ import android.preference.RingtonePreference;
 import android.support.v4.app.NavUtils;
 import android.text.TextUtils;
 import android.view.MenuItem;
-import sc.arc.R;
+import sc.arc.settings.SettingsFragmentNetwork;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -41,20 +41,16 @@ public class SettingsActivity extends PreferenceActivity {
 	 * shown on tablets.
 	 */
 	private static final boolean ALWAYS_SIMPLE_PREFS = false;
-
+	
 	// http://stackoverflow.com/questions/13596250/how-to-listen-for-preference-changes-within-a-preferencefragment
 	
-	/*@Override
+	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		// Display the fragment as the main content.
-        getFragmentManager().beginTransaction()
-                .replace(android.R.id.content, new SettingsFragment())
-                .commit();
-        
-		setupActionBar();
-	}*/
+		
+		//setupActionBar();
+	}
 
 	protected boolean isValidFragment(String fragmentName) {
         /*if (getApplicationInfo().targetSdkVersion  >= android.os.Build.VERSION_CODES.HONEYCOMB) {
@@ -148,10 +144,10 @@ public class SettingsActivity extends PreferenceActivity {
 	}*/
 
 	/** {@inheritDoc} */
-	/*@Override
+	@Override
 	public boolean onIsMultiPane() {
 		return isXLargeTablet(this) && !isSimplePreferences(this);
-	}*/
+	}
 
 	/**
 	 * Helper method to determine if the device has an extra-large screen. For
@@ -173,14 +169,6 @@ public class SettingsActivity extends PreferenceActivity {
 		return ALWAYS_SIMPLE_PREFS || Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB || !isXLargeTablet(context);
 	}
 
-	/** {@inheritDoc} */
-	/*@Override
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public void onBuildHeaders(List<Header> target) {
-		if (!isSimplePreferences(this)) {
-			loadHeadersFromResource(R.xml.pref_headers, target);
-		}
-	}*/
 
 	/**
 	 * A preference value change listener that updates the preference's summary
@@ -243,29 +231,33 @@ public class SettingsActivity extends PreferenceActivity {
 		// Set the listener to watch for value changes.
 		preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
 
-		// Trigger the listener immediately with the preference's
-		// current value.
+		// Trigger the listener immediately with the preference's current value.
 		sBindPreferenceSummaryToValueListener.onPreferenceChange(preference, PreferenceManager
 				.getDefaultSharedPreferences(preference.getContext()).getString(preference.getKey(), ""));
 	}
 
+	public static final String KEY_CONN_TYPE 	= "connection_type";
+	public static final String KEY_CONN_NET_ID 	= "network_identifier";
+	public static final String KEY_CONN_NET_IP 	= "ip_address";
+	
 	/**
 	 * This fragment shows general preferences only. It is used when the
 	 * activity is showing a two-pane settings UI.
 	 */
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public static class GeneralPreferenceFragment extends PreferenceFragment {
+	public static class NetworkPreferenceFragment extends PreferenceFragment {
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
-			addPreferencesFromResource(R.xml.pref_general);
+			addPreferencesFromResource(R.xml.pref_connection);
 
 			// Bind the summaries of EditText/List/Dialog/Ringtone preferences
 			// to their values. When their values change, their summaries are
 			// updated to reflect the new value, per the Android Design
 			// guidelines.
-			bindPreferenceSummaryToValue(findPreference("example_text"));
-			bindPreferenceSummaryToValue(findPreference("example_list"));
+			bindPreferenceSummaryToValue(findPreference(KEY_CONN_TYPE));
+			//bindPreferenceSummaryToValue(findPreference(KEY_CONN_NET_ID));
+			//bindPreferenceSummaryToValue(findPreference(KEY_CONN_NET_IP));
 		}
 	}
 

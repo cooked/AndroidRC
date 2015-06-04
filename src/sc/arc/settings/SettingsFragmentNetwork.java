@@ -1,38 +1,39 @@
 package sc.arc.settings;
 
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.provider.Settings;
+import sc.arc.R;
 
 public class SettingsFragmentNetwork extends PreferenceFragment {
 	
-	
+	public static final String KEY_CONN_TYPE = "connection_type";
     public SettingsFragmentNetwork() {
 	}
 
 	@Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        // TODO define the overall approach to prefrences
         //WifiManager wfm = (WifiManager)getActivity().getSystemService(Context.WIFI_SERVICE);
+        //startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
         
-        startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
         // Load the preferences from an XML resource
-        //addPreferencesFromResource(R.xml.pref_general);
+        addPreferencesFromResource(R.xml.pref_connection);
     }
     
     @Override
 	public void onResume() {
 	    super.onResume();
 	    getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(ospcl);
-
+        findPreference(KEY_CONN_TYPE).setSummary(
+        		getPreferenceScreen().getSharedPreferences().getString(KEY_CONN_TYPE, "Some Default Text"));
 	}
 
 	@Override
@@ -40,7 +41,6 @@ public class SettingsFragmentNetwork extends PreferenceFragment {
 	    getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(ospcl);
 	    super.onPause();
 	}
-	
 	
 	OnSharedPreferenceChangeListener ospcl = new OnSharedPreferenceChangeListener() {
 		@Override

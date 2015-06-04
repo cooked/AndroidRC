@@ -2,24 +2,15 @@ package sc.arc.surface;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
-import android.graphics.Rect;
-import android.os.Handler;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View.OnLayoutChangeListener;
-import android.view.ViewGroup.LayoutParams;
-import it.sephiroth.android.library.easing.Easing;
-import it.sephiroth.android.library.easing.EasingManager;
-import it.sephiroth.android.library.easing.Linear;
 import sc.arc.comm.rc.Channel;
 
 public class ControlSurface extends SurfaceView implements SurfaceHolder.Callback {
@@ -35,8 +26,13 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 
 	public Channel chx,chy;
 	
-	private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+	int color 		= Color.RED;
+	int background	= Color.BLACK;
 	
+	// colors palette
+	private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);			
+				
+				
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
 		
@@ -44,6 +40,13 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 		
 		chx.setRawM(getWidth()).init();
 		chy.setRawM(getHeight()).init();
+		
+		int front = Color.parseColor("#cddc39"); // green Android
+		
+		//ctx = context;
+		mPaint.setStyle(Style.FILL);
+		mPaint.setColor(front);
+		mPaint.setTextSize(40);
 		
 		mThread = new DrawThread(getContext());
 		mThread.setRunning(true);
@@ -54,17 +57,25 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 		//mThread.setSurfaceSize(width, height);
-		
-		//mThread.setRunning(false);
-		
+	
 		chx.setRawM(getWidth()).init();
 		chy.setRawM(getHeight()).init();
 		
-		//mThread.setRunning(true);
-		//mThread.start();
+		mThread.setRunning(false);
+		mThread = new DrawThread(getContext());
+		mThread.setRunning(true);
+		mThread.start();
 		
 	}
 
+	public void setColor(int color) {
+		this.color = color; 
+	}
+	
+	public void setColorBack(int color) {
+		this.background = color; 
+	}
+	
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
 		boolean retry = true;
@@ -89,11 +100,6 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 		mHolder = getHolder();
 		mHolder.addCallback(this);
 		
-		// Initializing the paint object mPaint
-		mPaint.setTextSize(40);
-		mPaint.setColor(Color.RED);
-		mPaint.setStyle(Style.FILL);
-		
 		chx = new Channel();
 		chy = new Channel();
 
@@ -101,13 +107,16 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 
 	public void resume() {
 		// Instantiating the thread
-		//if(mThread==null)
-		//	mThread = new BubbleThread(getContext());
-		//mThread.setRunning(true);
-		//mThread.start();
+		if(mThread!=null && mThread.isAlive()) {
+			mThread.setRunning(false);
+			mThread = new DrawThread(getContext());
+			mThread.setRunning(true);
+			mThread.start();
+		}
 	}
 
 	public void pause() {
+		
 		mThread.setRunning(false);
 	}
 	
@@ -129,28 +138,29 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 		chy.setDirty(false);
 	}
 
+	boolean kill = false;
 	
 	class DrawThread extends Thread {
 
 		private boolean run = false;
-
+		
 		public DrawThread(Context context) {
-			//ctx = context;
+
 		}
 
 		public void run() {
-			while (run) {
-				Canvas c = null;
-				try {
-					c = mHolder.lockCanvas(null);
-					synchronized (mHolder) {
-						doDraw(c);
+			
+			while(run) {
+					Canvas c = null;
+					try {
+						c = mHolder.lockCanvas(null);
+						synchronized (mHolder) {
+							doDraw(c);
+						}
+					} finally {
+						if (c != null)
+							mHolder.unlockCanvasAndPost(c);
 					}
-				} finally {
-					if (c != null) {
-						mHolder.unlockCanvasAndPost(c);
-					}
-				}
 			}
 		}
 
@@ -160,7 +170,7 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 
 		private void doDraw(Canvas canvas) {
 			//canvas.restore();
-			canvas.drawARGB(255, 0, 0, 0);
+			canvas.drawColor(background);
 			canvas.drawCircle(chx.getValueRaw(), chy.getValueRaw(), chy.getRawS(), mPaint);
 			canvas.drawLine(chx.getValueRaw(), 0, chx.getValueRaw(), chy.getRawM(), mPaint); // vertical
 			canvas.drawLine(0, chy.getValueRaw(), chx.getRawM(), chy.getValueRaw(), mPaint); // horizontal

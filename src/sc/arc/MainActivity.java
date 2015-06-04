@@ -5,23 +5,24 @@ import java.util.Arrays;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import sc.arc.comm.controller.ControllerBT;
 import sc.arc.comm.controller.ControllerTCP;
 import sc.arc.comm.controller.IController;
+import sc.arc.settings.SettingsFragmentNetwork;
 import sc.arc.surface.ControlSurface;
-import sc.arc.surface.ControlTouchListener;
 import sc.arc.util.SystemUiHider;
-import sc.arc.R;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -65,27 +66,36 @@ public class MainActivity extends Activity {
 	// comm
 	private IController ctrl;
 
+	SharedPreferences sharedPref;
+	int connType;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.activity_main);
 
-		final View controlsView = findViewById(R.id.fullscreen_content_controls);
 		final View contentView = findViewById(R.id.fullscreen_content);
-		final TextView myLabel = (TextView) findViewById(R.id.myLabel);
-
+		final TextView myLabel = (TextView) findViewById(R.id.myLabel);	
+		
 		// Getting reference to the control surfaces
 		ctrlSrfSx = (ControlSurface) findViewById(R.id.surf_sx);
-		//ctrlSrfSx.chx.setSpring(true);
 		ctrlSrfSx.chy.setInverted(true);
+		ctrlSrfSx.setColorBack(getResources().getColor(R.color.black_overlay));
 		ctrlSrfDx = (ControlSurface) findViewById(R.id.surf_dx);
 		ctrlSrfDx.chy.setInverted(true);
-
-		// initialise comm channel
-		//ctrl = new ControllerBT(this, myLabel, Arrays.asList(ctrlSrfSx.chx, ctrlSrfSx.chy, ctrlSrfDx.chx, ctrlSrfDx.chy));
-		ctrl = new ControllerTCP(this, myLabel, Arrays.asList(ctrlSrfSx.chx, ctrlSrfSx.chy, ctrlSrfDx.chx, ctrlSrfDx.chy));
-
+		ctrlSrfDx.setColorBack(getResources().getColor(R.color.black_overlay));
+		
+		PreferenceManager.setDefaultValues(this, R.xml.pref_connection, false);
+		sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		
+		loadPref();
+		if(connType==2)
+			ctrl = new ControllerBT(this, myLabel, Arrays.asList(ctrlSrfSx.chx, ctrlSrfSx.chy, ctrlSrfDx.chx, ctrlSrfDx.chy));
+		else if (connType==1)
+			ctrl = new ControllerTCP(this, myLabel, Arrays.asList(ctrlSrfSx.chx, ctrlSrfSx.chy, ctrlSrfDx.chx, ctrlSrfDx.chy));
+		else
+			ctrl=null;
 		
 		// Set up an instance of SystemUiHider to control the system UI for
 		// this activity.
@@ -105,17 +115,17 @@ public class MainActivity extends Activity {
 					// in-layout UI controls at the bottom of the
 					// screen.
 					if (mControlsHeight == 0) {
-						mControlsHeight = controlsView.getHeight();
+					//	mControlsHeight = controlsView.getHeight();
 					}
 					if (mShortAnimTime == 0) {
-						mShortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+						//mShortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 					}
-					controlsView.animate().translationY(visible ? 0 : mControlsHeight).setDuration(mShortAnimTime);
+					//controlsView.animate().translationY(visible ? 0 : mControlsHeight).setDuration(mShortAnimTime);
 				} else {
 					// If the ViewPropertyAnimator APIs aren't
 					// available, simply show or hide the in-layout UI
 					// controls.
-					controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
+					//controlsView.setVisibility(visible ? View.VISIBLE : View.GONE);
 				}
 			}
 		});
@@ -145,51 +155,93 @@ public class MainActivity extends Activity {
 		// delayedHide(100);
 	}
 
+	MenuInflater inflater;
+	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuInflater inflater = getMenuInflater();
+		inflater = getMenuInflater();
 		inflater.inflate(R.menu.action_bar, menu);
-
 		return super.onCreateOptionsMenu(menu);
 	}
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
-
 		return super.onPrepareOptionsMenu(menu);
 	}
 
-	boolean isStarted = false;
-	
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 			// action with ID action_refresh was selected
 			// action with ID action_settings was selected
 		case R.id.action_connect:
-			if (ctrl.discover())
-				ctrl.connect();
+			if(ctrl==null) {
+				Toast.makeText(getApplicationContext(), "No controller!", Toast.LENGTH_LONG).show();
+				return false;
+			}
+			if(!ctrl.isConnected()) {
+				if(ctrl.discover()) {
+					if(ctrl.connect()) {
+						Toast.makeText(getApplicationContext(), "Connecting...", Toast.LENGTH_SHORT).show();
+						while(!ctrl.isConnected()){};
+						item.setIcon(R.drawable.ic_conn_green);
+						Toast.makeText(getApplicationContext(), R.string.conn_wifi_connect, Toast.LENGTH_LONG).show();
+					} else {
+						item.setIcon(R.drawable.ic_conn_grey);
+					}
+				}
+			} else {
+				if(ctrl.isRunning())
+					Toast.makeText(getApplicationContext(), "ERROR! stop control first", Toast.LENGTH_LONG).show();
+				else {
+					ctrl.disconnect();
+					while(ctrl.isConnected()){};
+					Toast.makeText(getApplicationContext(), "disconnected", Toast.LENGTH_LONG).show();
+					item.setIcon(R.drawable.ic_conn_grey);
+				}
+			}
+			
 			break;
 		case R.id.action_rtx:
-			if (isStarted)
-				isStarted = ctrl.stop();
-			else
-				isStarted = ctrl.start();
+			if(ctrl==null) {
+				Toast.makeText(getApplicationContext(), "No controller!", Toast.LENGTH_LONG).show();
+				return false;
+			}
+			if(ctrl.isConnected()) {
+				if(ctrl.isRunning()) {
+					ctrl.stop();
+					item.setIcon(R.drawable.ic_action_stop);
+				} else {
+					ctrl.start();
+					item.setIcon(R.drawable.ic_action_play);
+				}
+			}
 			break;
 		case R.id.action_settings:
 			Intent intent = new Intent(this, SettingsActivity.class);
-			//EditText editText = (EditText) findViewById(R.id.edit_message);
-		    //String message = editText.getText().toString();
-		    //intent.putExtra(EXTRA_MESSAGE, message);
-			startActivity(intent);
+			startActivityForResult(intent, 99);
 			break;
 		default:
-			break;
 		}
 
 		return true;
+
 	}
 
+	
+	@Override
+	 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		//super.onActivityResult(requestCode, resultCode, data);
+		//if(requestCode==99)
+		//	loadPref();
+	 }
+	    
+	 private void loadPref(){
+		 connType = Integer.parseInt( sharedPref.getString(SettingsFragmentNetwork.KEY_CONN_TYPE, "None") );
+	 }
+	 
+	 
+	 
 	/**
 	 * Touch listener to use for in-layout UI controls to delay hiding the
 	 * system UI. This is to prevent the jarring behavior of controls going away

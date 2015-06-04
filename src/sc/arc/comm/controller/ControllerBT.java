@@ -3,7 +3,6 @@ package sc.arc.comm.controller;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -13,11 +12,11 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.widget.TextView;
-import sc.arc.comm.Command;
+import android.widget.Toast;
+import sc.arc.R;
 import sc.arc.comm.CommandBuffer;
-import sc.arc.comm.protocol.IProtocol;
-import sc.arc.comm.protocol.Protocol;
 import sc.arc.comm.protocol.ProtocolMSP;
 import sc.arc.comm.rc.Channel;
 
@@ -31,39 +30,49 @@ public class ControllerBT extends Controller {
 	private TextView myLabel;
 	private Activity activity;
 	
+	public String preferredDevice = "HC";
+	
 	public ControllerBT(Activity main, TextView myLabel, List<Channel> ch) {
 		super(new CommandBuffer());
+		setContext(main.getApplicationContext());
 		this.myLabel = myLabel;
 		activity = main;
-		//channels = ch;
 		
-		// init protocol // TODO move in a better position
+		// initialise the protocol (currently only MSP)
 		protocol = new ProtocolMSP(this, commandBuffer, ch);
-		
 	}
 	
 	@Override
 	public boolean discover() {
+		
+		// get the default adapter
 		mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-		if (mBluetoothAdapter == null)
-			myLabel.setText("No bluetooth adapter available");
-
-		if (!mBluetoothAdapter.isEnabled()) {
+		// check if the adapter exists
+		if (mBluetoothAdapter == null) {
+			Toast.makeText(getContext(), R.string.conn_bt_no_adapter, Toast.LENGTH_LONG).show();
+			return false;
+		// if exists and is disabled take note and start the activity to enable it
+		} else if (!mBluetoothAdapter.isEnabled()) {
 			Intent enableBluetooth = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			activity.startActivityForResult(enableBluetooth, 0);
+			Toast.makeText(getContext(), R.string.conn_bt_enabled, Toast.LENGTH_LONG).show();
+			// TODO check for the actual results and DO NOT assume everything's fine
 		}
-
+		
+		// then get the list of the known devices
 		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
 		if (pairedDevices.size() > 0) {
-			for (BluetoothDevice device : pairedDevices) {
-				if (device.getName().equals("BTBee")) {
+			for(BluetoothDevice device:pairedDevices) {
+				if(device.getName().contains(preferredDevice)) {
 					mmDevice = device;
-					myLabel.setText("Bluetooth Device Found");
+					Toast.makeText(getContext(), R.string.conn_bt_enabled, Toast.LENGTH_LONG).show();
 					return true;
 				}
 			}
-		}
-		myLabel.setText("Bluetooth NO Device");
+		// if none inform the user about it 
+		} else
+			Toast.makeText(getContext(), R.string.conn_bt_enabled, Toast.LENGTH_LONG).show();
+		
 		return false;
 	}
 	
@@ -76,98 +85,153 @@ public class ControllerBT extends Controller {
 			mmSocket.connect();
 			mmOutputStream = mmSocket.getOutputStream();
 			mmInputStream = mmSocket.getInputStream();
-			myLabel.setText("Bluetooth Opened");
 		} catch (IOException e) {
-			e.printStackTrace();
-			myLabel.setText("Bluetooth Error");
+			Toast.makeText(getContext(), R.string.conn_bt_connect_err, Toast.LENGTH_LONG).show();
 			return false;
 		}
-		// beginListenForData();
+		setConnected(true);
+		Toast.makeText(getContext(), R.string.conn_bt_connect, Toast.LENGTH_LONG).show();
 		return true;
 	}
 	
 	@Override
 	public boolean disconnect() {
-		//stopWorker = true;
 		try {
 			if(mmOutputStream!=null) mmOutputStream.close();
 			if(mmInputStream!=null) mmInputStream.close();
 			if(mmSocket!=null) mmSocket.close();
+			if (mBluetoothAdapter.isEnabled())
+				mBluetoothAdapter.disable();
 		} catch (IOException e) {
-			e.printStackTrace();
+			Toast.makeText(getContext(), R.string.conn_bt_disconnect_err, Toast.LENGTH_LONG).show();
 			return false;
 		}
-		myLabel.setText("Bluetooth Closed");
+		setConnected(false);
+		Toast.makeText(getContext(), R.string.conn_bt_disconnect, Toast.LENGTH_LONG).show();
 		return true;
 	}
+	
+	@Override
+	protected void txTask() {
+		new AsyncTask<Void, Void, Object>() {
+			
+			@Override
+			protected Object doInBackground(Void... v) {
 
-	/*public boolean sendData(List<ControlCh> channels) {
-		
-		String msg = "*";
-		for(ControlCh channel:channels)
-	        msg += channel.getNrmS()+" ";
-	    msg = msg.trim()+"\n";
-		return sendData(msg.getBytes());
-		
-	}*/
-	
-	/*public boolean sendData(byte[] bytes) {
-	
-	try {
-		mmOutputStream.write(bytes);
-		return true;
-	} catch (IOException e) {
-		e.printStackTrace();
-	}
-	return false;
-}*/
-	
-	public void sendData() {
-		
-		// send command to the buffer
-		protocol.txChannels();
+				protocol.txChannels();
 
-		if(!commandBuffer.isEmpty()) {
-			try {
-				mmOutputStream.write(commandBuffer.poll().getBytes());
-			} catch (IOException e) {
-				e.printStackTrace();
+				if(!commandBuffer.isEmpty()) {
+					try {
+						if(mmOutputStream!=null)
+							mmOutputStream.write(commandBuffer.poll().getBytes());
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+				return null;
 			}
-		}
+		}.execute();
+
 	}
 	
-
-	//@Override
-	public void run() {
-		sendData();
-		//H.postDelayed(this, ms_tx);
-	}
-	
-	
-
-	@Override
-	public boolean isConnected() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void setProtocol(IProtocol protcol) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	protected
-	void txTask() {
-		// TODO Auto-generated method stub
-		
-	}
-
 	@Override
 	protected
 	void rxTask() {
-		// TODO Auto-generated method stub
+			new AsyncTask<Void, Void, Object>() {
+				
+				int bytesRead = 0;
+				int BUFSIZE = 256;
+				int state = ProtocolMSP.IDLE;
+				byte[] buffer = new byte[BUFSIZE];
+				
+				@Override
+				protected Object doInBackground(Void... v) {
+					
+					protocol.requestTM(ProtocolMSP.MSP_RC);
+
+					if(!commandBuffer.isEmpty()) {
+						try {
+							if(mmOutputStream!=null)
+								mmOutputStream.write(commandBuffer.poll().getBytes());
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					}
+					
+					try {
+						while(mmInputStream.available()>0) {
+							bytesRead = mmInputStream.read(buffer);
+							if (bytesRead == -1) break;
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+					return null;
+				}
+
+				@Override
+				protected void onPostExecute(Object result) {
+					
+				
+					    myLabel.setText("reading: "+bytesRead+" / ");
+					    int dataSize = 0;
+					    int checksum = 0;
+					    int offset 	 = 0;
+					    byte inBuf[] = {};
+					    byte cmdMSP = 0;
+					    
+					    for(int i=0;i<bytesRead;i++) {
+					    	byte c = buffer[i];
+
+							if(state==ProtocolMSP.IDLE) {
+						    	if (c=='$') state = ProtocolMSP.HEADER_START;
+						    } else if (state == ProtocolMSP.HEADER_START) {
+						        state = (c=='M') ? ProtocolMSP.HEADER_M : ProtocolMSP.IDLE;
+						    } else if (state == ProtocolMSP.HEADER_M) {
+						    	state = (c=='>') ? ProtocolMSP.HEADER_ARROW : ProtocolMSP.IDLE;
+						    } else if (state == ProtocolMSP.HEADER_ARROW) {
+						    	
+						    	/*if (c > INBUF_SIZE) {  // now we are expecting the payload size
+						    		state = ProtocolMSP.IDLE;
+						            continue;
+						    	}*/
+						
+						    	dataSize = c;		myLabel.append(Integer.toString(dataSize)+",");
+						        checksum = c;
+						        offset	 = 0;
+						        inBuf = new byte[dataSize];
+						        
+						        state = ProtocolMSP.HEADER_SIZE;  // the command is to follow
+						        
+						    } else if (state == ProtocolMSP.HEADER_SIZE) {
+						    	cmdMSP = c;		myLabel.append(Integer.toString(cmdMSP)+" ");
+						        checksum ^= c;
+						            
+						        state = ProtocolMSP.HEADER_CMD;
+						            
+						    } else if (state == ProtocolMSP.HEADER_CMD) {
+						           if (offset < dataSize) {
+						        	  inBuf[offset++] = c;
+						              checksum ^= c;
+						            } else {
+							              if (checksum == c) {// compare calculated and transferred checksum
+							            	  ((ProtocolMSP)protocol).setInBuf(inBuf);
+							            	  ((ProtocolMSP)protocol).evaluateCommand(cmdMSP,dataSize); // we got a valid packet, evaluate it
+							            	  myLabel.append(((ProtocolMSP)protocol).debug);
+							              }
+						             
+							              state = ProtocolMSP.IDLE;
+						            }
+						           
+						    }
+					    	
+					    }
+					    
+					super.onPostExecute(result);
+				}
+				
+			}.execute();
 		
 	}
 

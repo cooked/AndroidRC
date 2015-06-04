@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0099cc"
+    android:fitsSystemWindows="true"
     tools:context="sc.arc.MainActivity" >
 
     <!--
@@ -28,68 +29,139 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true" >
+        android:layout_height="match_parent" >
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
 
             <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" >
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
 
-                <sc.arc.surface.ControlSurface          
-                    android:id="@+id/surf_sx"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="246dp"
-                    android:layout_margin="2dp" />
+                    android:layout_height="wrap_content" >
 
-                <TextView
-                    android:id="@+id/myLabel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="bottom"
-                    android:layout_weight="1"
-                    android:text="Small Text"
-                    android:textAppearance="?android:attr/textAppearanceSmall" />
+                    <TextView
+                        android:id="@+id/myLabel"
+                        android:layout_width="fill_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@color/black_overlay"
+                        android:paddingLeft="4dp"
+                        android:paddingTop="1dp"
+                        android:text=" ALT1000 DIR000 GPS"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+                </LinearLayout>
             </FrameLayout>
-
-            <Button
-                android:id="@+id/button1"
-                style="?android:attr/buttonStyleSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:minHeight="40dp"
-                android:minWidth="40dp"
-                android:text="Button" />
 
             <FrameLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1" >
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" >
 
-                <sc.arc.surface.ControlSurface
-                    android:id="@+id/surf_dx"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="246dp"
-                    android:layout_margin="2dp" />
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal" >
 
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" >
+
+                        <sc.arc.surface.ControlSurface
+                            android:id="@+id/surf_sx"
+                            android:layout_width="match_parent"
+                            android:layout_height="246dp"
+                            android:layout_margin="2dp" />
+
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent" >
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:orientation="vertical" >
+
+                            <Button
+                                android:id="@+id/Button01"
+                                style="?android:attr/buttonStyleSmall"
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight=".1"
+                                android:minHeight="40dp"
+                                android:minWidth="40dp"
+                                android:text="AUX1" />
+
+                            <Button
+                                android:id="@+id/Button06"
+                                style="?android:attr/buttonStyleSmall"
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight=".1"
+                                android:minHeight="40dp"
+                                android:minWidth="40dp"
+                                android:text="AUX2" />
+
+                            <Button
+                                android:id="@+id/Button05"
+                                style="?android:attr/buttonStyleSmall"
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight=".1"
+                                android:minHeight="40dp"
+                                android:minWidth="40dp"
+                                android:text="AUX3" />
+
+                            <Button
+                                android:id="@+id/Button04"
+                                style="?android:attr/buttonStyleSmall"
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight=".1"
+                                android:minHeight="40dp"
+                                android:minWidth="40dp"
+                                android:text="AUX4" />
+
+                            <Button
+                                android:id="@+id/Button03"
+                                style="?android:attr/buttonStyleSmall"
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight=".1"
+                                android:minHeight="40dp"
+                                android:minWidth="40dp"
+                                android:text="EXT1" />
+
+                            <Button
+                                android:id="@+id/button1"
+                                style="?android:attr/buttonStyleSmall"
+                                android:layout_width="fill_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_weight=".1"
+                                android:minHeight="40dp"
+                                android:minWidth="40dp"
+                                android:text="EXT2" />
+                        </LinearLayout>
+                    </FrameLayout>
+
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1" >
+
+                        <sc.arc.surface.ControlSurface
+                            android:id="@+id/surf_dx"
+                            android:layout_width="match_parent"
+                            android:layout_height="246dp"
+                            android:layout_margin="2dp" />
+                    </FrameLayout>
+                </LinearLayout>
             </FrameLayout>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/fullscreen_content_controls"
-            style="?metaButtonBarStyle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:background="@color/black_overlay"
-            android:orientation="horizontal"
-            tools:ignore="UselessParent" >
-
         </LinearLayout>
 
     </FrameLayout>

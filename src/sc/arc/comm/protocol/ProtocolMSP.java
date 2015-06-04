@@ -1,9 +1,5 @@
 package sc.arc.comm.protocol;
 
-import java.io.ByteArrayOutputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -12,16 +8,19 @@ import java.util.List;
 import sc.arc.comm.Command;
 import sc.arc.comm.CommandBuffer;
 import sc.arc.comm.controller.Controller;
-import sc.arc.comm.controller.IController;
 import sc.arc.comm.rc.Channel;
-import sc.arc.comm.rc.IChannels;
 
+/**
+ * @author stefanocottafavi
+ *
+ */
 public class ProtocolMSP extends Protocol {
 
 	public static final String ID = "MSP";
 	
-	private static final String MSP_HEADER = "$M<";
-
+	private static final String MSP_HEADER 		= "$M<";	// header command
+	private static final String MSP_HEADER_TM 	= "$M>";	// header response
+	
 	public static final int
 	  MSP_IDENT                =100,
 	  MSP_STATUS               =101,
@@ -66,14 +65,13 @@ public class ProtocolMSP extends Protocol {
 	;
 	
 	public static final int
-	  IDLE = 0,
-	  HEADER_START = 1,
-	  HEADER_M = 2,
-	  HEADER_ARROW = 3,
-	  HEADER_SIZE = 4,
-	  HEADER_CMD = 5,
-	  HEADER_ERR = 6
-	;
+	  IDLE 			= 0,
+	  HEADER_START 	= 1,
+	  HEADER_M 		= 2,
+	  HEADER_ARROW 	= 3,
+	  HEADER_SIZE 	= 4,
+	  HEADER_CMD 	= 5,
+	  HEADER_ERR 	= 6;
 	
 	int c_state = IDLE;
 	boolean err_rcvd = false;
@@ -81,7 +79,9 @@ public class ProtocolMSP extends Protocol {
 	byte checksum=0;
 	byte cmd;
 	int offset=0, dataSize=0;
+	
 	byte[] inBuf = new byte[256];
+	byte[] buffer = new byte[256];
 	
 	public byte[] getInBuf() {
 		return inBuf;
@@ -124,6 +124,10 @@ public class ProtocolMSP extends Protocol {
 	
 	int ctrlMode = Controller.MODE2;
 	
+	// set accordingly to MultiWii config
+	int CH_MIN = 1000;
+	int CH_MAX = 2000;
+	
 	public ProtocolMSP(Controller controller, CommandBuffer commandBuffer,List<Channel> chs) {
 		this.controller = controller;
 		setCommandBuffer(commandBuffer);
@@ -135,8 +139,8 @@ public class ProtocolMSP extends Protocol {
 	public void init() {
 		// initialize control's scaling according to the protocol, here [1000,2000]
 		for(int i=0;i<ch.length;i++) {
-			ch[i].out_min = 1000;
-			ch[i].out_max = 2000;
+			ch[i].out_min = CH_MIN;
+			ch[i].out_max = CH_MAX;
 		}
 		
 		// MSP expects 	ROLL/PITCH/YAW/THROTTLE/AUX1/AUX2/AUX3AUX4
@@ -157,6 +161,15 @@ public class ProtocolMSP extends Protocol {
 		
 	}
 	
+	/* (non-Javadoc)
+	 * @see sc.arc.comm.protocol.Protocol#eval()
+	 * Evaluate the buffer content. Parse the MSP message if header is "$M"
+	 */
+	@Override
+	public void eval() {
+		
+	}
+	
 	@Override
 	public void requestTM(int...tm) {
 		for(int t:tm)
@@ -165,12 +178,9 @@ public class ProtocolMSP extends Protocol {
 	
 	@Override
 	public void txChannels() {
-
-		mspSetRawRc(roll.getValue(), pitch.getValue(), yaw.getValue(), throttle.getValue());
-			
+		mspSetRawRc(roll.getValue(), pitch.getValue(), yaw.getValue(), throttle.getValue());	
 	}
 
-	
 	public void mspSetRawRc(int roll, int pitch, int yaw, int throttle) {
 		mspSetRawRc(roll,pitch,yaw,throttle,0,0,0,0);
 	}
@@ -178,16 +188,27 @@ public class ProtocolMSP extends Protocol {
 	public void mspSetRawRc(int roll, int pitch, int yaw, int throttle, int aux1, int aux2, int aux3, int aux4) {
 		// 16x UINT16, Range [1000;2000]
 		// ROLL/PITCH/YAW/THROTTLE/AUX1/AUX2/AUX3AUX4
-		
-		/*ByteBuffer payload = ByteBuffer.allocate(16);
-		payload.put(toBytes(roll));
-		payload.put(toBytes(pitch));
-		payload.put(toBytes(yaw));
-		payload.put(toBytes(throttle));
-		payload.put(toBytes(0));
-		payload.put(toBytes(0));
-		payload.put(toBytes(0));
-		payload.put(toBytes(0));*/
+
+		// old methods
+		ArrayList<Character> ca = new ArrayList<Character>();
+		ca.addAll(toCharArray(roll));
+		ca.addAll(toCharArray(pitch));
+		ca.addAll(toCharArray(yaw));
+		ca.addAll(toCharArray(throttle));
+		ca.addAll(toCharArray(aux1));
+		ca.addAll(toCharArray(aux2));
+		ca.addAll(toCharArray(aux3));
+		ca.addAll(toCharArray(aux4));
+		Character[] payload = ca.toArray(new Character[ca.size()]);
+		getCommandBuffer().add(new Command(requestMSP(MSP_SET_RAW_RC, payload)));
+
+		/*
+		 * ByteBuffer payload = ByteBuffer.allocate(16);
+		 * payload.put(toBytes(roll)); payload.put(toBytes(pitch));
+		 * payload.put(toBytes(yaw)); payload.put(toBytes(throttle));
+		 * payload.put(toBytes(0)); payload.put(toBytes(0));
+		 * payload.put(toBytes(0)); payload.put(toBytes(0));
+		 */
 		
 		/*CharBuffer payload = CharBuffer.allocate(16);
 		payload.put(toChars(roll));
@@ -203,19 +224,6 @@ public class ProtocolMSP extends Protocol {
 		payload.putChar((char)aux1).putChar((char)aux2).putChar((char)aux3).putChar((char)aux4);*/
 		//char[] arr = payload.array();
 		//getCommandBuffer().add( new Command(requestMSP(MSP_SET_RAW_RC,arr)) );
-		
-		// old methods
-		ArrayList<Character> ca = new ArrayList<Character>();
-		ca.addAll(toCharArray(roll));
-		ca.addAll(toCharArray(pitch));
-		ca.addAll(toCharArray(yaw));
-		ca.addAll(toCharArray(throttle));
-		ca.addAll(toCharArray(aux1));
-		ca.addAll(toCharArray(aux2));
-		ca.addAll(toCharArray(aux3));
-		ca.addAll(toCharArray(aux4));
-		Character[] payload = ca.toArray(new Character[ca.size()]);
-		getCommandBuffer().add( new Command(requestMSP(MSP_SET_RAW_RC,payload)) );
 		
 		/*ArrayList<Byte> ca = new ArrayList<Byte>();
 		ca.addAll(toCharArray(roll));
@@ -685,11 +693,4 @@ public class ProtocolMSP extends Protocol {
 		return  inBuf[p++]&0xff;
 	}
 
-	@Override
-	public void eval() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	
 }
