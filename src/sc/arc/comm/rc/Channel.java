@@ -13,11 +13,12 @@ public class Channel implements EasingCallback {
 			
 	public int out_min 		= 0;
 	public int out_max 		= 100;
+
 	
-	private float 	raw_v 	= 0;	// raw value
+	private float 	raw_v 	= 0;	// raw value [px]
 	private float 	raw_c 	= 0;	// raw center of the slider
 	private float 	raw_m 	= 0;	// raw max value (full excursion)
-	private float 	raw_s 	= 70;	// raw stick radius
+	private float 	raw_s 	= 50;	// raw stick radius
 	private int 	nrm_v 	= 0;	// normalised value
 	
 	private int 	tol_c 	= 20;	// tolerance of the center position
@@ -71,8 +72,15 @@ public class Channel implements EasingCallback {
 		nrm_v = inverted?(out_max-nrm_v)+out_min:nrm_v;
 		//setDirty(true);
 	}
+	public void setNrm(float nrm_v) {
+		//nrm_v = Math.max( Math.min(raw,out-raw_s), raw_s);
+		//nrm_v = Math.round(map(raw_v,raw_s,raw_m-raw_s,0,norm));
+		//nrm_v = Math.round(map(raw_v,raw_s,raw_m-raw_s,out_min,out_max));
+		nrm_v = inverted?(out_max-nrm_v)+out_min:nrm_v;
+		//setDirty(true);
+	}
 
-	float map(float x, float in_min, float in_max, float out_min, float out_max) {
+	private float map(float x, float in_min, float in_max, float out_min, float out_max) {
 	  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 	}
 	
@@ -123,31 +131,33 @@ public class Channel implements EasingCallback {
 	}
 	
 	// easing management
-	EasingManager.EaseType mEaseType = EasingManager.EaseType.EaseOut;
+	EasingManager.EaseType mEaseType = EasingManager.EaseType.EaseInOut;
 	EasingManager manager = new EasingManager(this);
+	private boolean complete = true;
 	
 	public void makeEasing() {
-		//manager.stop();
-		if(raw_v>raw_c)
-			manager.start(Elastic.class, mEaseType, raw_c, raw_v, 1000);
-		else
-			manager.start(Elastic.class, mEaseType, raw_v, raw_c, 1000);
+		if(complete) {
+			manager.start(Elastic.class, mEaseType, raw_c, raw_v, 500, 50);
+			complete = false;
+		}
 	}
 	
 	@Override
 	public void onEasingValueChanged(double value, double oldValue) {
 		if(!isCentered())
-			setRaw((float)oldValue);
+			setRaw((float)value);
 	}
 
 	@Override
 	public void onEasingStarted(double value) {
-		setRaw((float) value);
-		
+		if(!isCentered())
+			setRaw((float) value);
 	}
 
 	@Override
 	public void onEasingFinished(double value) {
 		setRaw((float)raw_c);
+		complete  = true;
+		manager.stop();
 	}
 }

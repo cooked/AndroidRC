@@ -87,8 +87,8 @@
                             android:layout_height="match_parent"
                             android:orientation="vertical" >
 
-                            <Button
-                                android:id="@+id/Button01"
+                            <ToggleButton
+                                android:id="@+id/ToggleButton1"
                                 style="?android:attr/buttonStyleSmall"
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
@@ -97,8 +97,8 @@
                                 android:minWidth="40dp"
                                 android:text="AUX1" />
 
-                            <Button
-                                android:id="@+id/Button06"
+                            <ToggleButton
+                                android:id="@+id/ToggleButton2"
                                 style="?android:attr/buttonStyleSmall"
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
@@ -107,8 +107,8 @@
                                 android:minWidth="40dp"
                                 android:text="AUX2" />
 
-                            <Button
-                                android:id="@+id/Button05"
+                            <ToggleButton
+                                android:id="@+id/ToggleButton3"
                                 style="?android:attr/buttonStyleSmall"
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"
@@ -117,8 +117,8 @@
                                 android:minWidth="40dp"
                                 android:text="AUX3" />
 
-                            <Button
-                                android:id="@+id/Button04"
+                            <ToggleButton
+                                android:id="@+id/ToggleButton4"
                                 style="?android:attr/buttonStyleSmall"
                                 android:layout_width="fill_parent"
                                 android:layout_height="wrap_content"

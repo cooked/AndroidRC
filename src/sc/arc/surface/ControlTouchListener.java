@@ -10,13 +10,14 @@ import sc.arc.comm.rc.Channel;
 public class ControlTouchListener implements OnTouchListener {
 
 	boolean grabbed = false;
+	boolean move	= false;
 	
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
 		ArrayList<Channel> chs = ((ControlSurface)v).getChs();
-		float vx,vy;
+		float vx=0,vy=0, x=0,y=0;
 		switch(event.getAction()) {
-		case MotionEvent.ACTION_DOWN: 
+		case MotionEvent.ACTION_DOWN:
 			vx = event.getX() - v.getLeft();
 			vy = event.getY() - v.getTop();
 			if(chs.get(0).isCatched(vx) && chs.get(1).isCatched(vy))
@@ -38,10 +39,12 @@ public class ControlTouchListener implements OnTouchListener {
 				v.performClick();
 			}
 			grabbed = false;
+			move	= false;
 			return true;
 			
 		}
         return false;
 	}
+	
 
 }

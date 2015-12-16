@@ -4,9 +4,12 @@ import java.util.Arrays;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,6 +24,8 @@ import sc.arc.comm.controller.ControllerBT;
 import sc.arc.comm.controller.ControllerTCP;
 import sc.arc.comm.controller.IController;
 import sc.arc.settings.SettingsFragmentNetwork;
+import sc.arc.surface.ControlGravity;
+import sc.arc.surface.ControlSensorListener;
 import sc.arc.surface.ControlSurface;
 import sc.arc.util.SystemUiHider;
 
@@ -63,11 +68,22 @@ public class MainActivity extends Activity {
 	private ControlSurface ctrlSrfSx;
 	private ControlSurface ctrlSrfDx;
 
+	private ControlGravity ctrlGrvty;
+	
 	// comm
 	private IController ctrl;
 
 	SharedPreferences sharedPref;
 	int connType;
+
+	private SensorManager mSensorManager;
+
+	private Sensor mRotationVectorSensor;
+
+	private ControlSensorListener mRotationListener;
+
+	private Sensor mPressureSensor;
+
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -81,21 +97,32 @@ public class MainActivity extends Activity {
 		// Getting reference to the control surfaces
 		ctrlSrfSx = (ControlSurface) findViewById(R.id.surf_sx);
 		ctrlSrfSx.chy.setInverted(true);
+		//ctrlSrfSx.chx.setSpring(true);
 		ctrlSrfSx.setColorBack(getResources().getColor(R.color.black_overlay));
 		ctrlSrfDx = (ControlSurface) findViewById(R.id.surf_dx);
 		ctrlSrfDx.chy.setInverted(true);
+		//ctrlSrfDx.chx.setSpring(true);
+		//ctrlSrfDx.chy.setSpring(true);
 		ctrlSrfDx.setColorBack(getResources().getColor(R.color.black_overlay));
 		
+		// set gravity control
+		mSensorManager 			= (SensorManager)(getSystemService(Context.SENSOR_SERVICE));
+		mRotationVectorSensor 	= mSensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR);
+		mPressureSensor 		= mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+		mRotationListener		= new ControlSensorListener(ctrlSrfSx,ctrlSrfDx,myLabel);
+		
+		// getting preferences
 		PreferenceManager.setDefaultValues(this, R.xml.pref_connection, false);
 		sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
 		
-		loadPref();
-		if(connType==2)
+		//loadPref();
+		//if(connType==2)
 			ctrl = new ControllerBT(this, myLabel, Arrays.asList(ctrlSrfSx.chx, ctrlSrfSx.chy, ctrlSrfDx.chx, ctrlSrfDx.chy));
-		else if (connType==1)
-			ctrl = new ControllerTCP(this, myLabel, Arrays.asList(ctrlSrfSx.chx, ctrlSrfSx.chy, ctrlSrfDx.chx, ctrlSrfDx.chy));
-		else
-			ctrl=null;
+		//else if (connType==1)
+			//ctrl = new ControllerTCP(this, myLabel, Arrays.asList(ctrlSrfSx.chx, ctrlSrfSx.chy, ctrlSrfDx.chx, ctrlSrfDx.chy));
+		//else
+		//	ctrl=null;
+			
 		
 		// Set up an instance of SystemUiHider to control the system UI for
 		// this activity.
@@ -172,8 +199,6 @@ public class MainActivity extends Activity {
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
-			// action with ID action_refresh was selected
-			// action with ID action_settings was selected
 		case R.id.action_connect:
 			if(ctrl==null) {
 				Toast.makeText(getApplicationContext(), "No controller!", Toast.LENGTH_LONG).show();
@@ -186,10 +211,10 @@ public class MainActivity extends Activity {
 						while(!ctrl.isConnected()){};
 						item.setIcon(R.drawable.ic_conn_green);
 						Toast.makeText(getApplicationContext(), R.string.conn_wifi_connect, Toast.LENGTH_LONG).show();
-					} else {
+					} else
 						item.setIcon(R.drawable.ic_conn_grey);
-					}
-				}
+				} else 
+					item.setIcon(R.drawable.ic_conn_grey);
 			} else {
 				if(ctrl.isRunning())
 					Toast.makeText(getApplicationContext(), "ERROR! stop control first", Toast.LENGTH_LONG).show();
@@ -275,15 +300,25 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		mSensorManager.registerListener(mRotationListener, mRotationVectorSensor,10000);
+		mSensorManager.registerListener(mRotationListener, mPressureSensor,10000);
+		
 		ctrlSrfSx.resume();
 		ctrlSrfDx.resume();
+		
+		
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
+		
+		mSensorManager.unregisterListener(mRotationListener, mRotationVectorSensor);
+		mSensorManager.unregisterListener(mRotationListener, mPressureSensor);
 		ctrlSrfSx.pause();
 		ctrlSrfDx.pause();
+		
+		
 	}
 
 	@Override

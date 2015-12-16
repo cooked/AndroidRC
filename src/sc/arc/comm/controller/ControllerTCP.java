@@ -76,7 +76,7 @@ public class ControllerTCP extends Controller {
 			}
 		}
 		 
-		Toast.makeText(getContext(), "NO ESP_ network", Toast.LENGTH_LONG).show();
+		Toast.makeText(getContext(), "NO "+preferredConnection+" network found", Toast.LENGTH_LONG).show();
 		return false;
 	}
     

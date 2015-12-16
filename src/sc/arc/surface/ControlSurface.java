@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import sc.arc.comm.rc.Channel;
@@ -31,11 +33,11 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 	
 	// colors palette
 	private final Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);			
-				
-				
+ 		
 	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
 		
+		// setup touch controller
 		setOnTouchListener(new ControlTouchListener());
 		
 		chx.setRawM(getWidth()).init();
@@ -56,8 +58,7 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-		//mThread.setSurfaceSize(width, height);
-	
+		
 		chx.setRawM(getWidth()).init();
 		chy.setRawM(getHeight()).init();
 		
@@ -102,7 +103,9 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 		
 		chx = new Channel();
 		chy = new Channel();
-
+		
+		// creating new gesture detector
+        //gestureDetector = new GestureDetector(context, new GestureListener());
 	}
 
 	public void resume() {
@@ -115,14 +118,17 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 		}
 	}
 
-	public void pause() {
-		
+	public void pause() {	
 		mThread.setRunning(false);
 	}
 	
 	public void setStick(float x, float y) {
 		chx.setRaw(x);
 		chy.setRaw(y);
+	}
+	public void setStickNrm(float x, float y) {
+		chx.setNrm(x);
+		chy.setNrm(y);
 	}
 	
 	public ArrayList<Channel> getChs() {
@@ -176,8 +182,8 @@ public class ControlSurface extends SurfaceView implements SurfaceHolder.Callbac
 			canvas.drawLine(0, chy.getValueRaw(), chx.getRawM(), chy.getValueRaw(), mPaint); // horizontal
 
 			//canvas.drawText(String.format("%02X ", chy.getByte()), 0, chy.getRaw(), mPaint);
-			canvas.drawText(chy.getNrmS(), 0, chy.getValueRaw(), mPaint);
-			canvas.drawText(chx.getNrmS(), chx.getValueRaw(), 32, mPaint);
+			canvas.drawText(chx.getNrmS(), 0, chy.getValueRaw(), mPaint);
+			canvas.drawText(chy.getNrmS(), chx.getValueRaw(), 32, mPaint);
 			//canvas.save();
 
 		}

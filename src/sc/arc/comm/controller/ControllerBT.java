@@ -71,7 +71,7 @@ public class ControllerBT extends Controller {
 			}
 		// if none inform the user about it 
 		} else
-			Toast.makeText(getContext(), R.string.conn_bt_enabled, Toast.LENGTH_LONG).show();
+			Toast.makeText(getContext(), "No BT paired device", Toast.LENGTH_LONG).show();
 		
 		return false;
 	}
@@ -100,7 +100,7 @@ public class ControllerBT extends Controller {
 			if(mmOutputStream!=null) mmOutputStream.close();
 			if(mmInputStream!=null) mmInputStream.close();
 			if(mmSocket!=null) mmSocket.close();
-			if (mBluetoothAdapter.isEnabled())
+			if(mBluetoothAdapter!=null && mBluetoothAdapter.isEnabled())
 				mBluetoothAdapter.disable();
 		} catch (IOException e) {
 			Toast.makeText(getContext(), R.string.conn_bt_disconnect_err, Toast.LENGTH_LONG).show();
